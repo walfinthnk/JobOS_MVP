@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   統計
                 </Link>
                 <Link href="/settings/gmail" className="text-gray-600 hover:text-gray-900 font-medium">
-                  設定
+                  Gmail連携
                 </Link>
               </nav>
             </div>

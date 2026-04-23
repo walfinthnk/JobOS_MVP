@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { GmailConnectSection } from '@/components/GmailConnectSection';
+import { GmailSyncButton } from '@/components/GmailSyncButton';
 import { SyncLogList, type SyncLog } from '@/components/SyncLogList';
 import type { GmailIntegration } from '@/lib/types';
 
@@ -30,11 +31,14 @@ export default async function GmailSettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Gmail 連携設定</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Gmail と連携することで、受信メールから求人応募の状況を自動で追跡できます。
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gmail連携</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Gmail と連携することで、受信メールから求人応募の状況を自動で追跡できます。
+          </p>
+        </div>
+        {integration && <GmailSyncButton autoSync />}
       </div>
 
       <GmailConnectSection integration={integration as GmailIntegration | null} />
