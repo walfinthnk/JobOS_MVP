@@ -54,7 +54,6 @@ export async function POST() {
       userId:         'me',
       startHistoryId,
       historyTypes:   ['messageAdded'],
-      labelId:        'INBOX',
     });
 
     for (const record of historyRes.data.history ?? []) {
@@ -62,13 +61,14 @@ export async function POST() {
         if (added.message?.id) messageIds.push(added.message.id);
       }
     }
-  } catch {
-    // history が古すぎる場合などは history_id だけ更新して終了
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[Sync] history.list failed:', message);
     await supabase
       .from('gmail_integrations')
       .update({ history_id: currentHistoryId, last_synced_at: new Date().toISOString() })
       .eq('id', integration.id);
-    return NextResponse.json({ synced: 0 });
+    return NextResponse.json({ synced: 0, debug: { error: message, startHistoryId, currentHistoryId } });
   }
 
   let synced = 0;
@@ -189,5 +189,5 @@ export async function POST() {
     .update({ history_id: currentHistoryId, last_synced_at: new Date().toISOString() })
     .eq('id', integration.id);
 
-  return NextResponse.json({ synced });
+  return NextResponse.json({ synced, debug: { found: messageIds.length, startHistoryId, currentHistoryId } });
 }
