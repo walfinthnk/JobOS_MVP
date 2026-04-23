@@ -119,7 +119,9 @@ export function SyncLogList({ initialLogs }: { initialLogs: SyncLog[] }) {
                 {log.confidence_score != null && (
                   <span>確信度 {Math.round(log.confidence_score * 100)}%</span>
                 )}
-                <span>{new Date(log.processed_at).toLocaleString('ja-JP')}</span>
+                <span suppressHydrationWarning>
+                  {new Date(log.processed_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+                </span>
               </div>
               {log.job_applications && (
                 <p className="mt-1 text-xs text-blue-600">

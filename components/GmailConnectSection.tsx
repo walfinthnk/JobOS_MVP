@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { GmailIntegration } from '@/lib/types';
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+}
 
 interface Props {
   integration: Pick<GmailIntegration, 'id' | 'gmail_address' | 'is_active' | 'last_synced_at' | 'watch_expiry'> | null;
@@ -12,6 +17,8 @@ export function GmailConnectSection({ integration }: Props) {
   const router = useRouter();
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   async function handleDisconnect() {
     if (!confirm('Gmail 連携を解除しますか？同期ログはすべて削除されます。')) return;
@@ -44,17 +51,13 @@ export function GmailConnectSection({ integration }: Props) {
             <dd className="text-gray-900 font-medium">{integration.gmail_address}</dd>
 
             <dt className="text-gray-500">最終同期</dt>
-            <dd className="text-gray-900">
-              {integration.last_synced_at
-                ? new Date(integration.last_synced_at).toLocaleString('ja-JP')
-                : '未同期'}
+            <dd className="text-gray-900" suppressHydrationWarning>
+              {mounted ? (integration.last_synced_at ? formatDate(integration.last_synced_at) : '未同期') : '—'}
             </dd>
 
             <dt className="text-gray-500">Watch 有効期限</dt>
-            <dd className="text-gray-900">
-              {integration.watch_expiry
-                ? new Date(integration.watch_expiry).toLocaleString('ja-JP')
-                : '—'}
+            <dd className="text-gray-900" suppressHydrationWarning>
+              {mounted ? formatDate(integration.watch_expiry) : '—'}
             </dd>
           </dl>
 
