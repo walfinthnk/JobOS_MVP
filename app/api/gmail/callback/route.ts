@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { google } from 'googleapis';
 import { createClient } from '@/lib/supabase/server';
-import { exchangeCodeForTokens, createOAuth2Client } from '@/lib/gmail/client';
+import { exchangeCodeForTokens, createOAuth2Client, createGmailClient } from '@/lib/gmail/client';
 import { encrypt } from '@/lib/gmail/crypto';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
@@ -47,12 +47,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${APP_URL}/settings/gmail?error=missing_tokens`);
   }
 
-  // Gmail アドレスを取得
+  // Gmail アドレスを取得（getProfile は gmail.readonly スコープで動作）
   const oauth2 = createOAuth2Client();
   oauth2.setCredentials(tokens);
-  const oauth2Service = google.oauth2({ version: 'v2', auth: oauth2 });
-  const { data: userInfo } = await oauth2Service.userinfo.get();
-  const gmailAddress = userInfo.email!;
+  let gmailAddress: string;
+  try {
+    const gmail = google.gmail({ version: 'v1', auth: oauth2 });
+    const { data: profile } = await gmail.users.getProfile({ userId: 'me' });
+    if (!profile.emailAddress) {
+      return NextResponse.redirect(`${APP_URL}/settings/gmail?error=no_email`);
+    }
+    gmailAddress = profile.emailAddress;
+  } catch {
+    return NextResponse.redirect(`${APP_URL}/settings/gmail?error=profile_fetch_failed`);
+  }
 
   // トークンを AES-256-GCM で暗号化して DB に保存
   const { data: integration, error: dbError } = await supabase
@@ -74,7 +82,7 @@ export async function GET(request: Request) {
 
   // Gmail Push 通知 (watch) を登録
   try {
-    const gmail = google.gmail({ version: 'v1', auth: oauth2 });
+    const gmail = createGmailClient(tokens.access_token!);
     const watchRes = await gmail.users.watch({
       userId: 'me',
       requestBody: {
