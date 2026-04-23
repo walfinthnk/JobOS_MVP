@@ -1,18 +1,7 @@
 import { NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createGmailClient, getValidAccessToken, extractBody } from '@/lib/gmail/client';
 import { parseEmail } from '@/lib/gmail/parser';
-
-async function verifyGoogleJWT(token: string): Promise<boolean> {
-  try {
-    const client = new OAuth2Client();
-    const ticket = await client.verifyIdToken({ idToken: token });
-    return !!ticket.getPayload();
-  } catch {
-    return false;
-  }
-}
 
 interface PubSubMessage {
   emailAddress: string;
@@ -20,18 +9,6 @@ interface PubSubMessage {
 }
 
 export async function POST(request: Request) {
-  // 1. JWT 検証
-  const authHeader = request.headers.get('Authorization');
-  const token = authHeader?.replace('Bearer ', '');
-
-  if (!token) {
-    return NextResponse.json({ error: 'Missing token' }, { status: 401 });
-  }
-
-  const isValid = await verifyGoogleJWT(token);
-  if (!isValid) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-  }
 
   // 2. Pub/Sub メッセージをデコード
   let pubsubData: PubSubMessage;
