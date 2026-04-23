@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusBadge } from './StatusBadge';
 import type { JobStatus } from '@/lib/types';
@@ -51,6 +51,7 @@ interface ReviewState {
 export function SyncLogList({ initialLogs }: { initialLogs: SyncLog[] }) {
   const router = useRouter();
   const [logs, setLogs] = useState<SyncLog[]>(initialLogs);
+  useEffect(() => { setLogs(initialLogs); }, [initialLogs]);
   const [reviewing, setReviewing] = useState<ReviewState | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
