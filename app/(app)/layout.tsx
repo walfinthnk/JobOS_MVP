@@ -30,6 +30,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <Link href="/stats" className="text-gray-600 hover:text-gray-900 font-medium">
                   統計
                 </Link>
+                <Link href="/settings/gmail" className="text-gray-600 hover:text-gray-900 font-medium">
+                  設定
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-2">
