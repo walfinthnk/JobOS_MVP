@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createGmailClient, getValidAccessToken, extractBody } from '@/lib/gmail/client';
-import { encrypt } from '@/lib/gmail/crypto';
 import { parseEmail } from '@/lib/gmail/parser';
 
 async function verifyGoogleJWT(token: string): Promise<boolean> {
@@ -81,7 +79,7 @@ export async function POST(request: Request) {
   const gmail = createGmailClient(accessToken);
   const startHistoryId = integration.history_id ?? String(newHistoryId - 1);
 
-  let messageIds: string[] = [];
+  const messageIds: string[] = [];
   try {
     const historyRes = await gmail.users.history.list({
       userId: 'me',
