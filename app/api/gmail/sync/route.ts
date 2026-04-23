@@ -68,7 +68,7 @@ export async function POST() {
       .from('gmail_integrations')
       .update({ history_id: currentHistoryId, last_synced_at: new Date().toISOString() })
       .eq('id', integration.id);
-    return NextResponse.json({ synced: 0, debug: { error: message, startHistoryId, currentHistoryId } });
+    return NextResponse.json({ synced: 0 });
   }
 
   let synced = 0;
@@ -189,5 +189,5 @@ export async function POST() {
     .update({ history_id: currentHistoryId, last_synced_at: new Date().toISOString() })
     .eq('id', integration.id);
 
-  return NextResponse.json({ synced, debug: { found: messageIds.length, startHistoryId, currentHistoryId } });
+  return NextResponse.json({ synced });
 }
