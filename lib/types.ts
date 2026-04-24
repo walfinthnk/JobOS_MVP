@@ -45,6 +45,7 @@ export interface JobApplication {
   status:       JobStatus;
   applied_date: string | null;
   notes:        string | null;
+  site_name:    string | null;
   created_at:   string;
   updated_at:   string;
 }
@@ -99,6 +100,7 @@ export interface CreateJobRequest {
   status?:      JobStatus;
   applied_date?: string;
   notes?:       string;
+  site_name?:   string;
 }
 
 export interface UpdateJobRequest {
@@ -108,6 +110,7 @@ export interface UpdateJobRequest {
   status?:       JobStatus;
   applied_date?: string;
   notes?:        string;
+  site_name?:    string;
 }
 
 export interface JobWithHistory extends JobApplication {

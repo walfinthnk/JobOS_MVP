@@ -15,6 +15,9 @@ export async function createJobAction(formData: FormData) {
   const status       = (formData.get('status') as JobStatus) || 'applied';
   const applied_date = (formData.get('applied_date') as string) || null;
   const notes        = (formData.get('notes') as string)?.trim() || null;
+  const site_name_raw = (formData.get('site_name') as string)?.trim();
+  const site_name_other = (formData.get('site_name_other') as string)?.trim();
+  const site_name = site_name_raw === 'その他' ? (site_name_other || null) : (site_name_raw || null);
 
   if (!company_name || !position) {
     redirect('/jobs/new?error=企業名とポジションは必須です');
@@ -22,7 +25,7 @@ export async function createJobAction(formData: FormData) {
 
   const { data: job, error } = await supabase
     .from('job_applications')
-    .insert({ user_id: user.id, company_name, position, job_url, status, applied_date, notes })
+    .insert({ user_id: user.id, company_name, position, job_url, status, applied_date, notes, site_name })
     .select()
     .single();
 

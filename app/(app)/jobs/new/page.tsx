@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createJobAction } from './actions';
 import { JOB_STATUS_LABELS, JobStatus } from '@/lib/types';
+import { SiteNameSelector } from '@/components/SiteNameSelector';
 
 const STATUS_OPTIONS = Object.entries(JOB_STATUS_LABELS) as [JobStatus, string][];
 
@@ -86,6 +87,13 @@ export default async function NewJobPage({
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            応募サイト名
+          </label>
+          <SiteNameSelector />
         </div>
 
         <div>

@@ -63,6 +63,7 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body.status       !== undefined) updateData.status       = body.status;
   if (body.applied_date !== undefined) updateData.applied_date = body.applied_date || null;
   if (body.notes        !== undefined) updateData.notes        = body.notes?.trim() || null;
+  if (body.site_name    !== undefined) updateData.site_name    = body.site_name?.trim() || null;
 
   const { data: updated, error } = await supabase
     .from('job_applications')

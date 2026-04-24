@@ -37,6 +37,22 @@ export default async function DashboardPage() {
   const safeJobs = (jobs ?? []) as JobApplication[];
   const { total, screening_rate, active_days } = computeSummary(safeJobs);
 
+  // 最新Gmailメッセージ ID を求人ごとに取得（FR-028: 最新メールリンク）
+  const { data: syncLogs } = await supabase
+    .from('gmail_sync_logs')
+    .select('application_id, gmail_message_id')
+    .eq('user_id', user!.id)
+    .in('action', ['created', 'updated'])
+    .not('application_id', 'is', null)
+    .order('processed_at', { ascending: false });
+
+  const gmailMessages: Record<string, string> = {};
+  for (const log of syncLogs ?? []) {
+    if (log.application_id && !gmailMessages[log.application_id]) {
+      gmailMessages[log.application_id] = log.gmail_message_id;
+    }
+  }
+
   return (
     <div>
       {/* ヘッダー：サマリー + 追加ボタン */}
@@ -72,7 +88,7 @@ export default async function DashboardPage() {
           <p className="text-sm mt-1">「求人を追加する」から応募求人を登録しましょう</p>
         </div>
       ) : (
-        <KanbanBoard jobs={safeJobs} />
+        <KanbanBoard jobs={safeJobs} gmailMessages={gmailMessages} />
       )}
     </div>
   );

@@ -8,21 +8,22 @@ const COLUMNS: { status: JobStatus; label: string; color: string }[] = [
   { status: 'offered',   label: '内定',     color: 'border-green-300' },
 ];
 
-export function KanbanBoard({ jobs }: { jobs: JobApplication[] }) {
+interface KanbanBoardProps {
+  jobs: JobApplication[];
+  gmailMessages?: Record<string, string>;
+}
+
+export function KanbanBoard({ jobs, gmailMessages = {} }: KanbanBoardProps) {
   const declined = jobs.filter(j => j.status === 'declined');
-  const accepted = jobs.filter(j => j.status === 'accepted');
 
   return (
     <div>
       {/* メインカンバン */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
         {COLUMNS.map(({ status, label, color }) => {
-          const colJobs = jobs.filter(j =>
-            j.status === status || (status === 'offered' && j.status === 'accepted')
-          );
           const displayJobs = status === 'offered'
             ? jobs.filter(j => j.status === 'offered' || j.status === 'accepted')
-            : colJobs;
+            : jobs.filter(j => j.status === status);
 
           return (
             <div key={status} className={`bg-gray-50 rounded-lg border-t-2 ${color} p-3 min-h-[200px]`}>
@@ -33,7 +34,13 @@ export function KanbanBoard({ jobs }: { jobs: JobApplication[] }) {
                 </span>
               </div>
               <div className="space-y-2">
-                {displayJobs.map(job => <JobCard key={job.id} job={job} />)}
+                {displayJobs.map(job => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    gmailMessageId={gmailMessages[job.id]}
+                  />
+                ))}
               </div>
             </div>
           );
@@ -41,11 +48,17 @@ export function KanbanBoard({ jobs }: { jobs: JobApplication[] }) {
       </div>
 
       {/* 辞退・不採用 */}
-      {(declined.length > 0 || accepted.length > 0) && declined.length > 0 && (
+      {declined.length > 0 && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold text-gray-500 mb-2">辞退・不採用</h3>
           <div className="flex flex-wrap gap-3">
-            {declined.map(job => <JobCard key={job.id} job={job} />)}
+            {declined.map(job => (
+              <JobCard
+                key={job.id}
+                job={job}
+                gmailMessageId={gmailMessages[job.id]}
+              />
+            ))}
           </div>
         </div>
       )}

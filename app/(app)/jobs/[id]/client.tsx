@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { deleteJobAction } from './actions';
+import { SiteNameSelector } from '@/components/SiteNameSelector';
+import { JOB_STATUS_LABELS, type JobApplication, type JobStatus } from '@/lib/types';
 
 // ── 削除ボタン ─────────────────────────────────────────────
 
@@ -41,55 +44,156 @@ export function DeleteButton({ jobId }: { jobId: string }) {
   );
 }
 
-// ── メモエディタ（500msデバウンス自動保存） ─────────────────
+// ── 全フィールド編集フォーム（FR-029・FR-030） ──────────────
 
-interface NotesEditorProps {
-  jobId: string;
-  initialNotes: string | null;
+const STATUS_OPTIONS = Object.entries(JOB_STATUS_LABELS) as [JobStatus, string][];
+
+interface JobEditFormProps {
+  job: JobApplication;
 }
 
-export function NotesEditor({ jobId, initialNotes }: NotesEditorProps) {
-  const [notes, setNotes]   = useState(initialNotes ?? '');
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const timerRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function JobEditForm({ job }: JobEditFormProps) {
+  const router = useRouter();
+  const today = new Date().toISOString().split('T')[0];
 
-  const save = useCallback(async (value: string) => {
-    setStatus('saving');
+  const [form, setForm] = useState({
+    company_name: job.company_name,
+    position:     job.position,
+    job_url:      job.job_url ?? '',
+    status:       job.status,
+    applied_date: job.applied_date ?? '',
+    notes:        job.notes ?? '',
+  });
+  const [siteName, setSiteName] = useState(job.site_name ?? '');
+  const [saving, setSaving]     = useState(false);
+  const [toast, setToast]       = useState('');
+
+  function field(name: keyof typeof form) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm(prev => ({ ...prev, [name]: e.target.value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
     try {
-      await fetch(`/api/jobs/${jobId}`, {
+      const res = await fetch(`/api/jobs/${job.id}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ notes: value }),
+        body: JSON.stringify({
+          company_name: form.company_name.trim(),
+          position:     form.position.trim(),
+          job_url:      form.job_url.trim() || null,
+          status:       form.status,
+          applied_date: form.applied_date || null,
+          notes:        form.notes.trim() || null,
+          site_name:    siteName.trim() || null,
+        }),
       });
-      setStatus('saved');
-      setTimeout(() => setStatus('idle'), 2000);
-    } catch {
-      setStatus('idle');
+      if (!res.ok) throw new Error('保存に失敗しました');
+      setToast('保存しました');
+      setTimeout(() => setToast(''), 3000);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '保存に失敗しました');
+    } finally {
+      setSaving(false);
     }
-  }, [jobId]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setNotes(value);
-    setStatus('idle');
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => save(value), 500);
-  };
+  }
 
   return (
-    <div>
-      <textarea
-        value={notes}
-        onChange={handleChange}
-        rows={4}
-        maxLength={2000}
-        placeholder="面接官の印象・企業の特徴など"
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-      />
-      <p className="text-xs text-gray-400 mt-1 h-4">
-        {status === 'saving' && '保存中...'}
-        {status === 'saved'  && '保存しました'}
-      </p>
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-5 p-5">
+      <h2 className="text-sm font-semibold text-gray-700">基本情報</h2>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          企業名 <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text" required maxLength={100} value={form.company_name} onChange={field('company_name')}
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          職種・ポジション <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text" required maxLength={100} value={form.position} onChange={field('position')}
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">応募サイト名</label>
+        <SiteNameSelector defaultValue={job.site_name} onChangeSiteName={setSiteName} />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">求人URL</label>
+        <div className="mt-1 flex gap-2">
+          <input
+            type="url" maxLength={2000} value={form.job_url} onChange={field('job_url')}
+            placeholder="https://"
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          {form.job_url && (
+            <a
+              href={form.job_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-2 text-sm text-blue-600 hover:bg-gray-50 transition-colors"
+            >
+              開く ↗
+            </a>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">応募日</label>
+          <input
+            type="date" max={today} value={form.applied_date} onChange={field('applied_date')}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            ステータス <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={form.status} onChange={field('status')}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">メモ</label>
+        <textarea
+          value={form.notes} onChange={field('notes')}
+          rows={4} maxLength={2000}
+          placeholder="面接官の印象・企業の特徴など"
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+        />
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? '保存中...' : '変更を保存する'}
+        </button>
+        {toast && (
+          <span className="text-sm text-green-600">{toast}</span>
+        )}
+      </div>
+    </form>
   );
 }

@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/StatusBadge';
-import { DeleteButton, NotesEditor } from './client';
-import { updateStatusAction } from './actions';
-import { JOB_STATUS_LABELS, type JobStatus, type StatusHistory } from '@/lib/types';
+import { DeleteButton, JobEditForm } from './client';
+import { JOB_STATUS_LABELS, type JobApplication, type JobStatus, type StatusHistory } from '@/lib/types';
 
 const PROGRESS_STEPS: { status: JobStatus; label: string }[] = [
   { status: 'applied',   label: '応募中' },
@@ -69,7 +68,7 @@ export default async function JobDetailPage({ params }: Params) {
                 const isDone    = currentOrder > stepOrder;
                 return (
                   <div key={step.status} className="flex items-center gap-1 flex-1">
-                    <div className={`flex-1 text-center`}>
+                    <div className="flex-1 text-center">
                       <div className={`mx-auto w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
                         ${isActive ? 'bg-blue-600 text-white' : isDone ? 'bg-blue-200 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
                         {i + 1}
@@ -92,52 +91,8 @@ export default async function JobDetailPage({ params }: Params) {
           </div>
         )}
 
-        {/* ステータス更新 */}
-        <div className="p-5">
-          <form action={updateStatusAction} className="flex items-center gap-3">
-            <input type="hidden" name="id" value={id} />
-            <label htmlFor="status" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-              ステータスを更新
-            </label>
-            <select
-              id="status" name="status" defaultValue={job.status}
-              className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {(Object.entries(JOB_STATUS_LABELS) as [JobStatus, string][]).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              更新
-            </button>
-          </form>
-        </div>
-
-        {/* 基本情報 */}
-        <div className="p-5 space-y-3">
-          {job.job_url && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 w-20 shrink-0">求人URL</span>
-              <a
-                href={job.job_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline truncate"
-              >
-                {job.job_url} ↗
-              </a>
-            </div>
-          )}
-          {job.applied_date && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 w-20 shrink-0">応募日</span>
-              <span className="text-sm text-gray-900">{formatDate(job.applied_date)}</span>
-            </div>
-          )}
-        </div>
+        {/* 全フィールド編集フォーム */}
+        <JobEditForm job={job as JobApplication} />
 
         {/* ステータス変更履歴 */}
         {histories.length > 0 && (
@@ -160,12 +115,6 @@ export default async function JobDetailPage({ params }: Params) {
             </ol>
           </div>
         )}
-
-        {/* メモ */}
-        <div className="p-5">
-          <p className="text-sm font-medium text-gray-700 mb-2">メモ</p>
-          <NotesEditor jobId={id} initialNotes={job.notes} />
-        </div>
       </div>
     </div>
   );
