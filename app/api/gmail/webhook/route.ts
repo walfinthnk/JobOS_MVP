@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createGmailClient, getValidAccessToken, extractBody } from '@/lib/gmail/client';
-import { parseEmail } from '@/lib/gmail/parser';
+import { parseEmail, shouldExcludeEmail } from '@/lib/gmail/parser';
 
 interface PubSubMessage {
   emailAddress: string;
@@ -122,8 +122,37 @@ export async function POST(request: Request) {
       continue;
     }
 
+    // FR-033: 非求人メール早期除外
+    if (shouldExcludeEmail(from, subject)) {
+      await supabase.from('gmail_sync_logs').insert({
+        user_id:          integration.user_id,
+        integration_id:   integration.id,
+        gmail_message_id: messageId,
+        action:           'skipped',
+        raw_subject:      subject,
+        error_message:    '非求人メールとして除外',
+      });
+      continue;
+    }
+
     // メール解析
     const parsed = parseEmail(subject, body, from);
+
+    // FR-034: 転職サイト経由で企業名が特定できない場合は pending_review
+    if (parsed.site_name && !parsed.company) {
+      await supabase.from('gmail_sync_logs').insert({
+        user_id:          integration.user_id,
+        integration_id:   integration.id,
+        gmail_message_id: messageId,
+        action:           'pending_review',
+        parsed_company:   null,
+        parsed_position:  parsed.position,
+        detected_status:  parsed.status,
+        confidence_score: 0,
+        raw_subject:      subject,
+      });
+      continue;
+    }
 
     if (!parsed.status && !parsed.company) continue;
 
@@ -173,6 +202,7 @@ export async function POST(request: Request) {
             position:     parsed.position ?? '',
             status:       'applied',
             applied_date: receivedAt.split('T')[0],
+            site_name:    parsed.site_name,
           })
           .select('id')
           .single();
