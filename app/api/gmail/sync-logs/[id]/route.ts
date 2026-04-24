@@ -15,7 +15,13 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json() as { confirmed_status?: JobStatus; application_id?: string; skip?: boolean };
+  const body = await request.json() as {
+    confirmed_status?: JobStatus;
+    application_id?: string;
+    skip?: boolean;
+    company_name?: string;
+    position?: string;
+  };
 
   // 操作対象ログの所有者確認
   const { data: log } = await supabase
@@ -49,15 +55,18 @@ export async function PATCH(
 
   const targetApplicationId = body.application_id ?? log.application_id;
 
+  const resolvedCompany = body.company_name?.trim() || log.parsed_company;
+  const resolvedPosition = body.position?.trim() || log.parsed_position;
+
   // application_id がない場合は新規作成
   let applicationId = targetApplicationId;
-  if (!applicationId && log.parsed_company) {
+  if (!applicationId && resolvedCompany) {
     const { data: newJob } = await supabase
       .from('job_applications')
       .insert({
         user_id:      user.id,
-        company_name: log.parsed_company,
-        position:     log.parsed_position ?? '',
+        company_name: resolvedCompany,
+        position:     resolvedPosition ?? '',
         status:       confirmedStatus,
       })
       .select('id')
@@ -74,27 +83,36 @@ export async function PATCH(
       });
     }
   } else if (applicationId) {
-    // 既存 job のステータス更新
+    // 既存 job のステータス・企業名・職種を更新
     const { data: job } = await supabase
       .from('job_applications')
-      .select('status')
+      .select('status, company_name, position')
       .eq('id', applicationId)
       .eq('user_id', user.id)
       .single();
 
-    if (job && job.status !== confirmedStatus) {
-      await supabase
-        .from('job_applications')
-        .update({ status: confirmedStatus, updated_at: new Date().toISOString() })
-        .eq('id', applicationId);
+    if (job) {
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (resolvedCompany && resolvedCompany !== job.company_name) updates.company_name = resolvedCompany;
+      if (resolvedPosition && resolvedPosition !== job.position) updates.position = resolvedPosition;
+      if (job.status !== confirmedStatus) updates.status = confirmedStatus;
 
-      await supabase.from('status_histories').insert({
-        application_id: applicationId,
-        from_status:    job.status,
-        to_status:      confirmedStatus,
-        changed_at:     new Date().toISOString(),
-        note:           'Gmail 同期（手動確認）',
-      });
+      if (Object.keys(updates).length > 1) {
+        await supabase
+          .from('job_applications')
+          .update(updates)
+          .eq('id', applicationId);
+      }
+
+      if (job.status !== confirmedStatus) {
+        await supabase.from('status_histories').insert({
+          application_id: applicationId,
+          from_status:    job.status,
+          to_status:      confirmedStatus,
+          changed_at:     new Date().toISOString(),
+          note:           'Gmail 同期（手動確認）',
+        });
+      }
     }
   }
 
