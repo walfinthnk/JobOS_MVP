@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
 
   // 未認証ユーザーを保護されたルートからリダイレクト
   const { pathname } = request.nextUrl;
-  const protectedRoutes = ['/dashboard', '/jobs', '/stats', '/settings'];
+  const protectedRoutes = ['/dashboard', '/jobs', '/stats', '/settings', '/privacy', '/terms'];
   const isProtected = protectedRoutes.some(r => pathname.startsWith(r));
 
   if (!user && isProtected) {
