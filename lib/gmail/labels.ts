@@ -64,8 +64,8 @@ async function getOrCreateLabel(accessToken: string, labelName: string): Promise
       labelCache.set(labelName, newId);
       return newId;
     }
-  } catch {
-    // ラベル操作失敗は処理継続（非致命的）
+  } catch (err) {
+    console.error('[Gmail labels] getOrCreateLabel failed:', labelName, err);
   }
 
   return null;

@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import { encrypt, decrypt } from './crypto';
 
 const SCOPES = [
-  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.modify',  // メッセージへのラベル付与に必要（readonlyの上位互換）
   'https://www.googleapis.com/auth/gmail.labels',
 ];
 
