@@ -19,7 +19,7 @@ export default async function GmailSettingsPage() {
     .from('gmail_sync_logs')
     .select(`
       id, raw_subject, action, parsed_company, parsed_position,
-      detected_status, confidence_score, error_message, processed_at,
+      detected_status, confidence_score, body_summary, error_message, processed_at,
       application_id,
       job_applications ( company_name, position )
     `)
