@@ -13,7 +13,7 @@ const PROGRESS_STEPS: { status: JobStatus; label: string }[] = [
 ];
 
 const STATUS_ORDER: Record<JobStatus, number> = {
-  applied: 0, screening: 1, interview: 2, offered: 3, accepted: 3, declined: -1,
+  considering: -1, applied: 0, screening: 1, interview: 2, offered: 3, accepted: 3, declined: -1,
 };
 
 function formatDate(dateStr: string | null, opts?: Intl.DateTimeFormatOptions) {
@@ -58,7 +58,7 @@ export default async function JobDetailPage({ params }: Params) {
       <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
 
         {/* ステータス進捗 */}
-        {job.status !== 'declined' ? (
+        {job.status !== 'declined' && job.status !== 'considering' ? (
           <div className="p-5">
             <p className="text-sm font-medium text-gray-700 mb-3">現在のステータス</p>
             <div className="flex items-center gap-1">

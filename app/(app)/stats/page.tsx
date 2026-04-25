@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server';
 import { JOB_STATUS_LABELS, type JobApplication, type JobStatus } from '@/lib/types';
 
 const STATUS_COLORS: Record<JobStatus, string> = {
-  applied:   'bg-gray-400',
-  screening: 'bg-blue-400',
-  interview: 'bg-amber-400',
-  offered:   'bg-green-400',
-  accepted:  'bg-green-600',
-  declined:  'bg-red-300',
+  considering: 'bg-purple-300',
+  applied:     'bg-gray-400',
+  screening:   'bg-blue-400',
+  interview:   'bg-amber-400',
+  offered:     'bg-green-400',
+  accepted:    'bg-green-600',
+  declined:    'bg-red-300',
 };
 
 export default async function StatsPage() {
@@ -25,7 +26,7 @@ export default async function StatsPage() {
   // ステータス別カウント
   const by_status = safeJobs.reduce<Record<JobStatus, number>>(
     (acc, j) => { acc[j.status as JobStatus]++; return acc; },
-    { applied: 0, screening: 0, interview: 0, offered: 0, accepted: 0, declined: 0 }
+    { considering: 0, applied: 0, screening: 0, interview: 0, offered: 0, accepted: 0, declined: 0 }
   );
 
   // 通過率

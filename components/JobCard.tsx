@@ -38,6 +38,14 @@ export function JobCard({ job, gmailMessageId }: JobCardProps) {
         )}
       </Link>
 
+      {!job.todo_completed && job.todo_note && (
+        <div className="px-3 pb-1">
+          <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-xs text-amber-700 max-w-full truncate">
+            ☐ {job.todo_type ? `[${job.todo_type}] ` : ''}{job.todo_note}
+          </span>
+        </div>
+      )}
+
       {hasMemo && (
         <div className="px-3 pb-2">
           <p className="text-xs text-gray-500 leading-relaxed whitespace-pre-wrap break-words">{displayMemo}</p>

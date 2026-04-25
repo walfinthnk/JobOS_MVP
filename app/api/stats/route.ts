@@ -22,12 +22,13 @@ export async function GET() {
   const total = jobs.length;
 
   const by_status: Record<JobStatus, number> = {
-    applied:   0,
-    screening: 0,
-    interview: 0,
-    offered:   0,
-    accepted:  0,
-    declined:  0,
+    considering: 0,
+    applied:     0,
+    screening:   0,
+    interview:   0,
+    offered:     0,
+    accepted:    0,
+    declined:    0,
   };
 
   let earliest: Date | null = null;

@@ -2,10 +2,11 @@ import { JobApplication, JobStatus } from '@/lib/types';
 import { JobCard } from './JobCard';
 
 const COLUMNS: { status: JobStatus; label: string; color: string }[] = [
-  { status: 'applied',   label: '応募中',   color: 'border-gray-300' },
-  { status: 'screening', label: '書類選考', color: 'border-blue-300' },
-  { status: 'interview', label: '面接中',   color: 'border-amber-300' },
-  { status: 'offered',   label: '内定',     color: 'border-green-300' },
+  { status: 'considering', label: '検討候補', color: 'border-purple-300' },
+  { status: 'applied',     label: '応募中',   color: 'border-gray-300' },
+  { status: 'screening',   label: '書類選考', color: 'border-blue-300' },
+  { status: 'interview',   label: '面接中',   color: 'border-amber-300' },
+  { status: 'offered',     label: '内定',     color: 'border-green-300' },
 ];
 
 interface KanbanBoardProps {
@@ -19,7 +20,7 @@ export function KanbanBoard({ jobs, gmailMessages = {} }: KanbanBoardProps) {
   return (
     <div>
       {/* メインカンバン */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto">
         {COLUMNS.map(({ status, label, color }) => {
           const displayJobs = status === 'offered'
             ? jobs.filter(j => j.status === 'offered' || j.status === 'accepted')

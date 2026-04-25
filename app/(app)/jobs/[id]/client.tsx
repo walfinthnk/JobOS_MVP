@@ -63,6 +63,8 @@ export function JobEditForm({ job }: JobEditFormProps) {
     status:       job.status,
     applied_date: job.applied_date ?? '',
     notes:        job.notes ?? '',
+    todo_type:    job.todo_type ?? '',
+    todo_note:    job.todo_note ?? '',
   });
   const [siteName, setSiteName] = useState(job.site_name ?? '');
   const [saving, setSaving]     = useState(false);
@@ -88,6 +90,8 @@ export function JobEditForm({ job }: JobEditFormProps) {
           applied_date: form.applied_date || null,
           notes:        form.notes.trim() || null,
           site_name:    siteName.trim() || null,
+          todo_type:    form.todo_type.trim() || null,
+          todo_note:    form.todo_note.trim() || null,
         }),
       });
       if (!res.ok) throw new Error('保存に失敗しました');
@@ -169,6 +173,38 @@ export function JobEditForm({ job }: JobEditFormProps) {
           >
             {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">ToDo</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">種別</label>
+            <select
+              value={form.todo_type}
+              onChange={field('todo_type')}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">なし</option>
+              <option value="書類提出">書類提出</option>
+              <option value="面接準備">面接準備</option>
+              <option value="回答待ち">回答待ち</option>
+              <option value="調査">調査</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1">内容</label>
+            <input
+              type="text"
+              value={form.todo_note}
+              onChange={field('todo_note')}
+              maxLength={200}
+              placeholder="例：職務経歴書を送付する"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </div>
 

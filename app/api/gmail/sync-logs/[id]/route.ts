@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { JobStatus } from '@/lib/types';
 import { createClient } from '@/lib/supabase/server';
+import { applySkipLabel, applyStatusLabel } from '@/lib/gmail/labels';
+import { getValidAccessToken } from '@/lib/gmail/client';
 
-const VALID_JOB_STATUSES: JobStatus[] = ['applied', 'screening', 'interview', 'offered', 'declined'];
+const VALID_JOB_STATUSES: JobStatus[] = ['considering', 'applied', 'screening', 'interview', 'offered', 'declined'];
 
 export async function PATCH(
   request: Request,
@@ -23,28 +25,46 @@ export async function PATCH(
     position?: string;
   };
 
-  // 操作対象ログの所有者確認
+  // 操作対象ログの取得
   const { data: log } = await supabase
     .from('gmail_sync_logs')
-    .select('id, action, detected_status, application_id, parsed_company, parsed_position')
+    .select('id, action, detected_status, application_id, parsed_company, parsed_position, gmail_message_id, integration_id')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
 
-  if (!log) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!log) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (log.action !== 'pending_review') return NextResponse.json({ error: 'Already resolved' }, { status: 409 });
+
+  // Gmail アクセストークン取得（ラベル付与用）
+  async function getAccessToken(): Promise<string | null> {
+    const { data: integration } = await supabase
+      .from('gmail_integrations')
+      .select('access_token_enc, refresh_token_enc, token_expires_at')
+      .eq('id', log!.integration_id)
+      .eq('user_id', user!.id)
+      .single();
+    if (!integration) return null;
+    try {
+      const { accessToken } = await getValidAccessToken(
+        integration.access_token_enc,
+        integration.refresh_token_enc,
+        integration.token_expires_at
+      );
+      return accessToken;
+    } catch { return null; }
   }
 
-  if (log.action !== 'pending_review') {
-    return NextResponse.json({ error: 'Already resolved' }, { status: 409 });
-  }
-
-  // スキップ（無視）の場合
+  // スキップ処理
   if (body.skip) {
-    await supabase
-      .from('gmail_sync_logs')
-      .update({ action: 'skipped' })
-      .eq('id', id);
+    await supabase.from('gmail_sync_logs').update({ action: 'skipped' }).eq('id', id);
+
+    // FR-039: スキップラベル付与
+    const accessToken = await getAccessToken();
+    if (accessToken && log.gmail_message_id) {
+      await applySkipLabel(accessToken, log.gmail_message_id);
+    }
+
     return NextResponse.json({ success: true });
   }
 
@@ -54,12 +74,11 @@ export async function PATCH(
   }
 
   const targetApplicationId = body.application_id ?? log.application_id;
-
-  const resolvedCompany = body.company_name?.trim() || log.parsed_company;
+  const resolvedCompany  = body.company_name?.trim() || log.parsed_company;
   const resolvedPosition = body.position?.trim() || log.parsed_position;
 
-  // application_id がない場合は新規作成
   let applicationId = targetApplicationId;
+
   if (!applicationId && resolvedCompany) {
     const { data: newJob } = await supabase
       .from('job_applications')
@@ -83,7 +102,6 @@ export async function PATCH(
       });
     }
   } else if (applicationId) {
-    // 既存 job のステータス・企業名・職種を更新
     const { data: job } = await supabase
       .from('job_applications')
       .select('status, company_name, position')
@@ -98,10 +116,7 @@ export async function PATCH(
       if (job.status !== confirmedStatus) updates.status = confirmedStatus;
 
       if (Object.keys(updates).length > 1) {
-        await supabase
-          .from('job_applications')
-          .update(updates)
-          .eq('id', applicationId);
+        await supabase.from('job_applications').update(updates).eq('id', applicationId);
       }
 
       if (job.status !== confirmedStatus) {
@@ -116,14 +131,16 @@ export async function PATCH(
     }
   }
 
-  // sync_log を更新
   await supabase
     .from('gmail_sync_logs')
-    .update({
-      action:         'updated',
-      application_id: applicationId,
-    })
+    .update({ action: 'updated', application_id: applicationId })
     .eq('id', id);
+
+  // FR-039: ステータスラベル付与
+  const accessToken = await getAccessToken();
+  if (accessToken && log.gmail_message_id) {
+    await applyStatusLabel(accessToken, log.gmail_message_id, confirmedStatus);
+  }
 
   return NextResponse.json({ success: true });
 }

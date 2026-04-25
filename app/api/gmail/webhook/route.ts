@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createGmailClient, getValidAccessToken, extractBody } from '@/lib/gmail/client';
 import { parseEmail, shouldExcludeEmail } from '@/lib/gmail/parser';
+import { applyStatusLabel } from '@/lib/gmail/labels';
 
 interface PubSubMessage {
   emailAddress: string;
@@ -135,8 +136,8 @@ export async function POST(request: Request) {
       continue;
     }
 
-    // メール解析
-    const parsed = parseEmail(subject, body, from);
+    // FR-036: Claude API によるメール解析（async）
+    const parsed = await parseEmail(subject, body, from);
 
     // FR-034: 転職サイト経由で企業名が特定できない場合は pending_review
     if (parsed.site_name && !parsed.company) {
@@ -150,6 +151,7 @@ export async function POST(request: Request) {
         detected_status:  parsed.status,
         confidence_score: 0,
         raw_subject:      subject,
+        body_summary:     parsed.body_summary,
       });
       continue;
     }
@@ -216,6 +218,8 @@ export async function POST(request: Request) {
             changed_at:     receivedAt,
           });
           syncAction = 'created';
+          // FR-039: 自動登録時にステータスラベル付与
+          await applyStatusLabel(accessToken, messageId, 'applied');
         }
       }
     } else if (parsed.company && isLowConfidence) {
@@ -244,7 +248,13 @@ export async function POST(request: Request) {
       detected_status:  parsed.status,
       confidence_score: parsed.confidence,
       raw_subject:      subject,
+      body_summary:     parsed.body_summary,
     });
+
+    // FR-039: ステータス更新時にラベル付与
+    if (syncAction === 'updated' && parsed.status) {
+      await applyStatusLabel(accessToken, messageId, parsed.status);
+    }
   }
 
   // 7. history_id と last_synced_at を更新

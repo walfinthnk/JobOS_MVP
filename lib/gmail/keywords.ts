@@ -2,6 +2,7 @@ import type { JobStatus } from '@/lib/types';
 
 // ステータス判定キーワード（件名・本文を対象に大文字小文字区別なしでマッチ）
 export const STATUS_KEYWORDS: Record<Exclude<JobStatus, 'applied'>, string[]> = {
+  considering: [],
   screening: [
     '書類選考通過', '書類選考を通過', '書類審査通過', '書類審査を通過',
     '次のステップ', '書類選考結果', '一次選考通過', '書類選考合格',

@@ -19,6 +19,7 @@ export async function GET() {
       parsed_position,
       detected_status,
       confidence_score,
+      body_summary,
       error_message,
       processed_at,
       application_id,

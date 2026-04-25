@@ -113,7 +113,7 @@ export async function POST() {
       continue;
     }
 
-    const parsed = parseEmail(subject, body, from);
+    const parsed = await parseEmail(subject, body, from);
 
     // FR-034: 転職サイト経由で企業名が特定できない場合は pending_review
     if (parsed.site_name && !parsed.company) {
@@ -127,6 +127,7 @@ export async function POST() {
         detected_status:  parsed.status,
         confidence_score: 0,
         raw_subject:      subject,
+        body_summary:     parsed.body_summary,
       });
       synced++;
       continue;
@@ -211,6 +212,7 @@ export async function POST() {
       detected_status:  parsed.status,
       confidence_score: parsed.confidence,
       raw_subject:      subject,
+      body_summary:     parsed.body_summary,
     });
 
     synced++;

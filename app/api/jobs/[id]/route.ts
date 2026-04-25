@@ -57,13 +57,16 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updateData: Record<string, unknown> = {};
-  if (body.company_name !== undefined) updateData.company_name = body.company_name.trim();
-  if (body.position     !== undefined) updateData.position     = body.position.trim();
-  if (body.job_url      !== undefined) updateData.job_url      = body.job_url?.trim() || null;
-  if (body.status       !== undefined) updateData.status       = body.status;
-  if (body.applied_date !== undefined) updateData.applied_date = body.applied_date || null;
-  if (body.notes        !== undefined) updateData.notes        = body.notes?.trim() || null;
-  if (body.site_name    !== undefined) updateData.site_name    = body.site_name?.trim() || null;
+  if (body.company_name   !== undefined) updateData.company_name   = body.company_name.trim();
+  if (body.position       !== undefined) updateData.position       = body.position.trim();
+  if (body.job_url        !== undefined) updateData.job_url        = body.job_url?.trim() || null;
+  if (body.status         !== undefined) updateData.status         = body.status;
+  if (body.applied_date   !== undefined) updateData.applied_date   = body.applied_date || null;
+  if (body.notes          !== undefined) updateData.notes          = body.notes?.trim() || null;
+  if (body.site_name      !== undefined) updateData.site_name      = body.site_name?.trim() || null;
+  if (body.todo_type      !== undefined) updateData.todo_type      = body.todo_type?.trim() || null;
+  if (body.todo_note      !== undefined) updateData.todo_note      = body.todo_note?.trim() || null;
+  if (body.todo_completed !== undefined) updateData.todo_completed = body.todo_completed;
 
   const { data: updated, error } = await supabase
     .from('job_applications')

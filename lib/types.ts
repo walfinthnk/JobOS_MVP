@@ -4,6 +4,7 @@
 // ============================================================
 
 export type JobStatus =
+  | 'considering' // 検討候補
   | 'applied'    // 応募中
   | 'screening'  // 書類選考
   | 'interview'  // 面接中
@@ -19,6 +20,7 @@ export type SyncAction =
   | 'error';         // 解析エラー
 
 export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
+  considering: '検討候補',
   applied:   '応募中',
   screening: '書類選考',
   interview: '面接中',
@@ -37,17 +39,20 @@ export interface Profile {
 }
 
 export interface JobApplication {
-  id:           string;
-  user_id:      string;
-  company_name: string;
-  position:     string;
-  job_url:      string | null;
-  status:       JobStatus;
-  applied_date: string | null;
-  notes:        string | null;
-  site_name:    string | null;
-  created_at:   string;
-  updated_at:   string;
+  id:             string;
+  user_id:        string;
+  company_name:   string;
+  position:       string;
+  job_url:        string | null;
+  status:         JobStatus;
+  applied_date:   string | null;
+  notes:          string | null;
+  site_name:      string | null;
+  todo_type:      string | null;
+  todo_note:      string | null;
+  todo_completed: boolean;
+  created_at:     string;
+  updated_at:     string;
 }
 
 export interface StatusHistory {
@@ -87,6 +92,7 @@ export interface GmailSyncLog {
   detected_status:  JobStatus | null;
   confidence_score: number | null;
   raw_subject:      string | null;
+  body_summary:     string | null;
   error_message:    string | null;
   processed_at:     string;
 }
@@ -104,13 +110,16 @@ export interface CreateJobRequest {
 }
 
 export interface UpdateJobRequest {
-  company_name?: string;
-  position?:     string;
-  job_url?:      string;
-  status?:       JobStatus;
-  applied_date?: string;
-  notes?:        string;
-  site_name?:    string;
+  company_name?:   string;
+  position?:       string;
+  job_url?:        string;
+  status?:         JobStatus;
+  applied_date?:   string;
+  notes?:          string;
+  site_name?:      string;
+  todo_type?:      string | null;
+  todo_note?:      string | null;
+  todo_completed?: boolean;
 }
 
 export interface JobWithHistory extends JobApplication {
