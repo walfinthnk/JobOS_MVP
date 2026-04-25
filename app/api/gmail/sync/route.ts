@@ -118,16 +118,18 @@ export async function POST() {
     // FR-034: 転職サイト経由で企業名が特定できない場合は pending_review
     if (parsed.site_name && !parsed.company) {
       await supabase.from('gmail_sync_logs').insert({
-        user_id:          user.id,
-        integration_id:   integration.id,
-        gmail_message_id: messageId,
-        action:           'pending_review',
-        parsed_company:   null,
-        parsed_position:  parsed.position,
-        detected_status:  parsed.status,
-        confidence_score: 0,
-        raw_subject:      subject,
-        body_summary:     parsed.body_summary,
+        user_id:           user.id,
+        integration_id:    integration.id,
+        gmail_message_id:  messageId,
+        action:            'pending_review',
+        parsed_company:    null,
+        parsed_position:   parsed.position,
+        detected_status:   parsed.status,
+        confidence_score:  0,
+        raw_subject:       subject,
+        body_summary:      parsed.body_summary,
+        parsed_site_name:  parsed.site_name,
+        parsed_job_url:    parsed.job_url,
       });
       synced++;
       continue;
@@ -174,6 +176,7 @@ export async function POST() {
             status:       'applied',
             applied_date: receivedAt.split('T')[0],
             site_name:    parsed.site_name,
+            job_url:      parsed.job_url,
           })
           .select('id')
           .single();
@@ -202,17 +205,19 @@ export async function POST() {
     }
 
     await supabase.from('gmail_sync_logs').insert({
-      user_id:          user.id,
-      integration_id:   integration.id,
-      gmail_message_id: messageId,
-      application_id:   applicationId,
-      action:           syncAction,
-      parsed_company:   parsed.company,
-      parsed_position:  parsed.position,
-      detected_status:  parsed.status,
-      confidence_score: parsed.confidence,
-      raw_subject:      subject,
-      body_summary:     parsed.body_summary,
+      user_id:           user.id,
+      integration_id:    integration.id,
+      gmail_message_id:  messageId,
+      application_id:    applicationId,
+      action:            syncAction,
+      parsed_company:    parsed.company,
+      parsed_position:   parsed.position,
+      detected_status:   parsed.status,
+      confidence_score:  parsed.confidence,
+      raw_subject:       subject,
+      body_summary:      parsed.body_summary,
+      parsed_site_name:  parsed.site_name,
+      parsed_job_url:    parsed.job_url,
     });
 
     synced++;

@@ -81,20 +81,22 @@ export interface GmailIntegration {
 }
 
 export interface GmailSyncLog {
-  id:               string;
-  user_id:          string;
-  integration_id:   string;
-  gmail_message_id: string;
-  application_id:   string | null;
-  action:           SyncAction;
-  parsed_company:   string | null;
-  parsed_position:  string | null;
-  detected_status:  JobStatus | null;
-  confidence_score: number | null;
-  raw_subject:      string | null;
-  body_summary:     string | null;
-  error_message:    string | null;
-  processed_at:     string;
+  id:                string;
+  user_id:           string;
+  integration_id:    string;
+  gmail_message_id:  string;
+  application_id:    string | null;
+  action:            SyncAction;
+  parsed_company:    string | null;
+  parsed_position:   string | null;
+  parsed_site_name:  string | null;
+  parsed_job_url:    string | null;
+  detected_status:   JobStatus | null;
+  confidence_score:  number | null;
+  raw_subject:       string | null;
+  body_summary:      string | null;
+  error_message:     string | null;
+  processed_at:      string;
 }
 
 // ── API リクエスト/レスポンス型 ───────────────────────────────

@@ -28,7 +28,7 @@ export async function PATCH(
   // 操作対象ログの取得
   const { data: log } = await supabase
     .from('gmail_sync_logs')
-    .select('id, action, detected_status, application_id, parsed_company, parsed_position, gmail_message_id, integration_id')
+    .select('id, action, detected_status, application_id, parsed_company, parsed_position, parsed_site_name, parsed_job_url, gmail_message_id, integration_id')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
@@ -87,6 +87,8 @@ export async function PATCH(
         company_name: resolvedCompany,
         position:     resolvedPosition ?? '',
         status:       confirmedStatus,
+        site_name:    log!.parsed_site_name ?? null,
+        job_url:      log!.parsed_job_url ?? null,
       })
       .select('id')
       .single();

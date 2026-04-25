@@ -17,6 +17,8 @@ export async function GET() {
       action,
       parsed_company,
       parsed_position,
+      parsed_site_name,
+      parsed_job_url,
       detected_status,
       confidence_score,
       body_summary,
