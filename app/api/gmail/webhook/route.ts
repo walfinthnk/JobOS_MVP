@@ -196,15 +196,16 @@ export async function POST(request: Request) {
         } else {
           syncAction = 'updated';
         }
-      } else if (parsed.status === 'applied') {
-        // 新規応募
+      } else if (parsed.status === 'applied' || parsed.status === 'considering') {
+        // 新規応募 / 検討候補
+        const newStatus = parsed.status;
         const { data: newJob } = await supabase
           .from('job_applications')
           .insert({
             user_id:      integration.user_id,
             company_name: parsed.company,
             position:     parsed.position ?? '',
-            status:       'applied',
+            status:       newStatus,
             applied_date: receivedAt.split('T')[0],
             site_name:    parsed.site_name,
             job_url:      parsed.job_url,
@@ -217,12 +218,12 @@ export async function POST(request: Request) {
           await supabase.from('status_histories').insert({
             application_id: applicationId,
             from_status:    null,
-            to_status:      'applied',
+            to_status:      newStatus,
             changed_at:     receivedAt,
           });
           syncAction = 'created';
           // FR-039: 自動登録時にステータスラベル付与
-          await applyStatusLabel(accessToken, messageId, 'applied');
+          await applyStatusLabel(accessToken, messageId, newStatus);
         }
       }
     } else if (parsed.company && isLowConfidence) {
