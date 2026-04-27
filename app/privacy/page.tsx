@@ -157,7 +157,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-4 text-lg font-semibold text-gray-900">11. お問い合わせ窓口</h2>
             <ul className="list-none text-sm text-gray-700 space-y-1">
-              <li><span className="font-medium">メール：</span>walfinthnk@gmail.com</li>
+              <li><span className="font-medium">メール：</span>xxxxxxxxxx</li>
               <li><span className="font-medium">受付時間：</span>平日 10:00〜18:00（土日祝日・年末年始を除く）</li>
               <li><span className="font-medium">回答期限：</span>受付から14日以内</li>
             </ul>
