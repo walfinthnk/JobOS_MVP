@@ -169,9 +169,9 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold text-gray-900">お問い合わせ</h2>
             <ul className="list-none text-sm text-gray-700 space-y-1">
-              <li><span className="font-medium">運営者：</span>Kaoru Akimoto</li>
-              <li><span className="font-medium">所在地：</span>神奈川県横浜市金沢区長浜2-7-39</li>
-              <li><span className="font-medium">メール：</span>walfinthnk@gmail.com</li>
+              <li><span className="font-medium">運営者：</span>XXXXXXXXXX</li>
+              <li><span className="font-medium">所在地：</span>XXXXXXXXXX</li>
+              <li><span className="font-medium">メール：</span>XXXXXXXXXX</li>
               <li><span className="font-medium">受付時間：</span>平日 10:00〜18:00（土日祝日・年末年始を除く）</li>
             </ul>
           </section>
